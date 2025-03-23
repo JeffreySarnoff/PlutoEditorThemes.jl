@@ -1,6 +1,7 @@
 :root {
     --cm-background: #273136;
-    --cm-color-editor-backgroundd: #273136;
+    --cm-color-background: #273136;
+    --cm-color-editor-background: #273136;
     /* Codemirror hints */
     --cm-color-editor-tooltip-border: rgba(28, 36, 39, 0.2); /* from "widget.shadow" (#1c2427) + alpha */
     --cm-color-editor-li-aria-selected-bg: #D9D4B820; /* from "list.activeSelectionBackground" */
@@ -43,6 +44,6 @@
     --cm-color-css: #D1DED3; /* from "editor.foreground" */
     --cm-color-css-accent: #A4B07E; /* from "terminal.ansiGreen" */
     --cm-css-why-doesnt-codemirror-highlight-all-the-text-aaa: #D1DED3; /* same fallback */
-    --cm-color-md: #323E45; /* a darker neutral for markdown text */
+    --cm-color-md: #D1DED3; /* a darker neutral for markdown text */
     --cm-color-md-accent: #C6A685; /* from "terminal.ansiRed" */
 }
