@@ -1,0 +1,169 @@
+### A Pluto.jl notebook ###
+# v0.20.5
+
+using Markdown
+using InteractiveUtils
+
+# ╔═╡ a3525297-6b2d-400d-818c-2adfe09158de
+# from me to you
+
+# ╔═╡ e724e63c-a82d-40dd-a5c7-c041c83d07c0
+#=
+begin
+	using Pkg
+	Pkg.activate(temp=true);
+	Pkg.add(url="https://github.com/JuliaPluto/PlutoLinks.jl");
+	Pkg.add(url="https://github.com/JeffreySarnoff/PlutoEditorColorThemes.jl");
+	using PlutoLinks;
+	using PlutoEditorColorThemes;
+    stylefile = "monokai_dark.css";
+	cssfile = abspath(joinpath(
+		pkgdir(PlutoEditorColorThemes), 
+		"frontend/styles",
+		stylefile
+	));
+	PlutoLinks.@use_file(cssfile);
+	PlutoEditorColorThemes.setcolortheme!();
+	PlutoEditorColorThemes.setcolortheme!(cssfile);
+end
+=#
+
+# ╔═╡ fb0945e1-2dad-4192-8ae7-5594ac4d962b
+
+
+
+
+
+
+
+
+# from me to you
+
+
+
+# ╔═╡ 745dcf7c-46ab-4210-9722-c0eec712765c
+#=
+    we use a shallow abstract type hierarcy to simplify dispatch
+=#
+
+# ╔═╡ 5c58d8d7-7342-4c95-8ee7-5d6e75a49a25
+begin
+	# our family of floating-point types for machine learning
+	abstract type AbsFloatML{Bits, SigBits}  <: AbstractFloat end
+	# some are Signed, having positive and negative values (and 0, NaN)
+	abstract type AbsSFloatML{Bits, SigBits} <: AbsFloatML{Bits, SigBits} end
+	# some are Unsigned, having non-negative values only (positives and 0, NaN)
+	abstract type AbsUFloatML{Bits, SigBits} <: AbsFloatML{Bits, SigBits} end
+end	
+
+# ╔═╡ 1d3f3994-8c72-46ef-b6bc-49cb33da33a4
+
+
+# ╔═╡ ffea6a2b-59cb-4f74-9c7f-aa2e70e5b4b8
+struct FoundFloat{Bits, SigBits} <: AbsFloatML{Bits, SigBits}
+    rationals::Vector{Float32}    # rationals given as nearest Flaat32
+	offsets::Vector{UInt8}        # value encodings .. indices given as 0-based
+end
+
+# ╔═╡ 96d5d993-511d-47d2-8311-a9f616debf43
+begin
+    nbits(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} =
+		Bits
+	nsigbits(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} = 
+		SigBits
+	nfracbits(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} = 
+		nsigbits(T) - 1
+	nexpbits(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} =
+		Bits - SigBits
+	
+	nvalues(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} =
+		2^nbits(T)
+	nsigvalues(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} =
+		2^nsigbits(T)
+	nfracvalues(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} =
+		2^nfracbits(T)
+	nexpvalues(::Type{T}) where {Bits, SigBits, T<:AbsFloatML{Bits, SigBits}} =
+		2^nexpbits(T)
+end	
+
+# ╔═╡ 69bbb896-ee19-48e2-bc83-ff8af18d2a69
+# how many magnitudes
+
+# ╔═╡ d75ce239-9192-4e7d-b7ed-7a1d2e677e8f
+# how many subnormal magnitudes?
+nsubnormals(::Type{T}) where {Bits, SigBits, T<:FoundFloat{Bits, SigBits}} =
+	2^SigBits - 1
+
+# ╔═╡ 8e182f3a-2343-4284-8dde-74dd749d6443
+# how many normal magnitudes?
+nnormals(::Type{T}) where {Bits, SigBits, T<:FoundFloat{Bits, SigBits}} =
+	2^Bits - nsubnormals(T)
+
+# ╔═╡ be9f5538-5a92-465b-ab71-44a4e2d1d1aa
+
+
+# ╔═╡ 0c844c91-f8cc-485a-a051-95a6fdea3b43
+# The intial value is 0
+# The next nsubnormals(T) are subnormal values
+#    subnormal values are equidistant
+#    the 2nd is 2 x first, the 3rd is 3 x first ...
+#    the first subnormal is 2^exp_min(T)
+
+# ╔═╡ f98f4654-cfbf-4bf7-a3b9-7d26e91bf993
+for F in (:nbits, :nsigbits, :nfracbits, :nexpbits,
+		  :nvalues, :nsigvalues, :nfracvalues, :nexpvalues,
+		  :nnormals, :nsubnormals,
+		  :subnormal_max, :subnormal_min, 
+		  :normal_max, :normal_min)
+	    @eval $F(x::T) where {T<:AbsFloatML} = $F(T)
+end
+
+# ╔═╡ 8a2925ce-76c0-4592-855a-eb030f6809d8
+begin	
+	exp_bias(::Type{T}) where {T<:AbsFloatML} = 
+		2^(nExpBits(T) - 1) - 1
+
+	exponent_max(::Type{T}) where {T<:AbsFloatML} = 
+		2.0^(biased_exponent_max(T))
+	exponent_min(::Type{T}) where {T<:AbsFloatML} = 
+		2.0^(biased_exponent_min(T))
+	
+	subnormal_max(::Type{T}) where {T<:AbsFloatML} = 
+		exponent_min(T) * ((nFracValues(T) - 1)//nFracValues(T))
+	subnormal_min(::Type{T}) where {T<:AbsFloatML} = 
+		exponent_min(T) * (1//nFracValues(T))
+	
+	normal_max(::Type{T}) where {T<:AbsFloatML} = 
+		exponent_max(T) * ((nFracValues(T) - 1)//nFracValues(T))
+	normal_min(::Type{T}) where {T<:AbsFloatML} = 
+		exponent_min(T) * (1//1)
+	
+	biased_exponent_max(::Type{T}) where {T<:AbsFloatML} =
+		2^(nExpBits(T)) - 1
+	biased_exponent_min(::Type{T}) where {T<:AbsFloatML} = 
+		1 - 2^(nExpBits(T) - 1)
+
+	for F in (:exponent_max, :exponent_min, :exp_bias,
+			  :subnormal_max, :subnormal_min, 
+			  :normal_max, :normal_min)
+	    @eval $F(x::T) where {T<:AbsFloatML} = $F(T)
+	end
+	
+end
+
+# ╔═╡ Cell order:
+# ╠═a3525297-6b2d-400d-818c-2adfe09158de
+# ╠═e724e63c-a82d-40dd-a5c7-c041c83d07c0
+# ╠═fb0945e1-2dad-4192-8ae7-5594ac4d962b
+# ╠═745dcf7c-46ab-4210-9722-c0eec712765c
+# ╠═5c58d8d7-7342-4c95-8ee7-5d6e75a49a25
+# ╠═1d3f3994-8c72-46ef-b6bc-49cb33da33a4
+# ╠═ffea6a2b-59cb-4f74-9c7f-aa2e70e5b4b8
+# ╠═96d5d993-511d-47d2-8311-a9f616debf43
+# ╠═69bbb896-ee19-48e2-bc83-ff8af18d2a69
+# ╠═d75ce239-9192-4e7d-b7ed-7a1d2e677e8f
+# ╠═8e182f3a-2343-4284-8dde-74dd749d6443
+# ╠═be9f5538-5a92-465b-ab71-44a4e2d1d1aa
+# ╠═0c844c91-f8cc-485a-a051-95a6fdea3b43
+# ╠═f98f4654-cfbf-4bf7-a3b9-7d26e91bf993
+# ╠═8a2925ce-76c0-4592-855a-eb030f6809d8

@@ -1,10 +1,12 @@
 :root {
+    --cm-background: #273136;
+    --cm-color-editor-backgroundd: #273136;
     /* Codemirror hints */
     --cm-color-editor-tooltip-border: rgba(28, 36, 39, 0.2); /* from "widget.shadow" (#1c2427) + alpha */
     --cm-color-editor-li-aria-selected-bg: #D9D4B820; /* from "list.activeSelectionBackground" */
     --cm-color-editor-li-aria-selected: #D1DED3; /* from "foreground" or "editor.foreground" */
     --cm-color-editor-li-notexported: #D1DED380; /* from "editor.foreground" + alpha */
-    --code-background: #323e45; /* from "editor.background" */
+    --code-background: #273136; /* from "editor.background" */
     --cm-color-code-differs-gutters: rgba(192,174,105,0.11); /* from "editorGutter.modifiedBackground" (#C0AE69) + alpha */
     --cm-color-line-numbers: #D1DED350; /* from "editorLineNumber.foreground" */
     --cm-selection-background: #D9D4B880; /* from "editor.selectionBackground" */
